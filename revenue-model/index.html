@@ -506,20 +506,36 @@
 
   // ─── URL hash: auto-fill API key ───
   (function initApiKey() {
-    const hash = location.hash.slice(1);
-    const match = hash.match(/(?:^|&)key=([^&]*)/);
-    if (!match) return;
-    try {
-      const key = decodeURIComponent(match[1]).trim();
-      if (!key) return;
-      document.getElementById('apiKey').value = key;
-      document.getElementById('apiBox').style.display = 'none';
-      document.getElementById('apiSetBadge').style.display = 'block';
-      document.getElementById('apiSetBadge').textContent =
-        '✅ APIキー設定済み（' + key.slice(0, 14) + '…）';
-    } catch (e) {
-      console.error('APIキーのデコードに失敗:', e);
+    const fullHash = location.hash;
+    console.log('[DEBUG] location.hash =', fullHash);
+
+    if (!fullHash || !fullHash.includes('key=')) {
+      console.log('[DEBUG] hashにkeyパラメータなし');
+      return;
     }
+
+    // "key=" 以降を取り出し "&" で切る
+    const afterKey = fullHash.slice(fullHash.indexOf('key=') + 4);
+    const rawEncoded = afterKey.split('&')[0];
+    console.log('[DEBUG] rawEncoded =', rawEncoded);
+
+    let key;
+    try {
+      key = decodeURIComponent(rawEncoded).trim();
+    } catch (e) {
+      console.warn('[DEBUG] decodeURIComponent失敗、生文字列を使用:', e);
+      key = rawEncoded.trim();
+    }
+
+    console.log('[DEBUG] key先頭14文字 =', key.slice(0, 14));
+
+    if (!key) return;
+
+    document.getElementById('apiKey').value = key;
+    document.getElementById('apiBox').style.display = 'none';
+    document.getElementById('apiSetBadge').style.display = 'block';
+    document.getElementById('apiSetBadge').textContent =
+      '✅ APIキー設定済み（' + key.slice(0, 14) + '…）';
   })();
 
   // ─── Share URL ───
