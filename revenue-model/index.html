@@ -507,12 +507,18 @@
   // ─── URL hash: auto-fill API key ───
   (function initApiKey() {
     const hash = location.hash.slice(1);
-    const params = new URLSearchParams(hash);
-    const key = params.get('key');
-    if (key) {
+    const match = hash.match(/(?:^|&)key=([^&]*)/);
+    if (!match) return;
+    try {
+      const key = decodeURIComponent(match[1]).trim();
+      if (!key) return;
       document.getElementById('apiKey').value = key;
       document.getElementById('apiBox').style.display = 'none';
       document.getElementById('apiSetBadge').style.display = 'block';
+      document.getElementById('apiSetBadge').textContent =
+        '✅ APIキー設定済み（' + key.slice(0, 14) + '…）';
+    } catch (e) {
+      console.error('APIキーのデコードに失敗:', e);
     }
   })();
 
