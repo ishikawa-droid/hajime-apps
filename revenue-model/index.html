@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>自動収益システム提案エンジン｜はじめ工房</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --blue:    #2563eb;
+      --teal:    #0891b2;
+      --green:   #059669;
+      --amber:   #d97706;
+      --red:     #dc2626;
+      --bg:      #f8f9fb;
+      --card:    #ffffff;
+      --border:  #e0e8f0;
+      --text:    #1e293b;
+      --muted:   #64748b;
+      --light:   #94a3b8;
+      /* Fibonacci spacing */
+      --s8: 8px; --s13: 13px; --s21: 21px; --s34: 34px; --s55: 55px;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', 'Yu Gothic', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ─── Header ─── */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: var(--s13) var(--s34);
+      display: flex;
+      align-items: center;
+      gap: var(--s13);
+    }
+    .logo { font-size: 18px; font-weight: 700; color: var(--blue); }
+    .logo span { color: #f59e0b; }
+    .logo-sep { color: var(--border); margin: 0 4px; }
+    .tagline { font-size: 13px; color: var(--muted); }
+
+    /* ─── Layout: golden ratio 38/62 ─── */
+    .main {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: var(--s21);
+      display: grid;
+      grid-template-columns: 38% 1fr;
+      gap: var(--s21);
+      align-items: start;
+    }
+
+    /* ─── Input Panel ─── */
+    .input-panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: var(--s21);
+      position: sticky;
+      top: var(--s21);
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      padding-bottom: var(--s13);
+      border-bottom: 2px solid #e8f4fd;
+      margin-bottom: var(--s21);
+    }
+
+    .api-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: var(--s13);
+      margin-bottom: var(--s21);
+    }
+    .api-box-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 6px;
+    }
+    .api-box input { font-size: 13px; }
+    .api-note { font-size: 11px; color: #a16207; margin-top: 5px; }
+
+    .form-group { margin-bottom: var(--s21); }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="password"], textarea, select {
+      width: 100%;
+      padding: 10px var(--s13);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: #fafafa;
+      transition: border-color .2s, background .2s;
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--blue); background: #fff; }
+    textarea { height: 110px; resize: vertical; line-height: 1.6; }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .chip {
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #f0f4f8;
+      color: var(--muted);
+      transition: all .15s;
+      user-select: none;
+    }
+    .chip:hover { background: #e8f4fd; border-color: var(--blue); color: var(--blue); }
+    .chip.active { background: #e8f4fd; border-color: var(--blue); color: var(--blue); font-weight: 600; }
+
+    .gen-btn {
+      width: 100%;
+      padding: var(--s13);
+      background: linear-gradient(135deg, var(--blue), var(--teal));
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s, transform .2s;
+      letter-spacing: .3px;
+    }
+    .gen-btn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    .gen-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+    /* ─── Output Panel ─── */
+    .output-panel { min-height: 400px; }
+
+    .empty-state {
+      background: var(--card);
+      border: 2px dashed var(--border);
+      border-radius: 13px;
+      padding: var(--s55) var(--s34);
+      text-align: center;
+      color: var(--light);
+    }
+    .empty-icon { font-size: 52px; margin-bottom: var(--s13); }
+    .empty-text { font-size: 15px; line-height: 1.8; }
+
+    /* ─── Loading ─── */
+    .loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--s55);
+      color: var(--muted);
+      font-size: 14px;
+      gap: var(--s13);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── Result Header ─── */
+    .result-meta {
+      font-size: 12px;
+      color: var(--light);
+      margin-bottom: var(--s13);
+    }
+
+    /* ─── Proposal Card ─── */
+    .proposal-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: var(--s21);
+      margin-bottom: var(--s21);
+      animation: fadeUp .4s ease both;
+    }
+    .proposal-card:nth-child(2) { animation-delay: .08s; }
+    .proposal-card:nth-child(3) { animation-delay: .16s; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card header */
+    .card-head {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--s13);
+      margin-bottom: var(--s13);
+    }
+    .card-num {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 15px; flex-shrink: 0;
+    }
+    .n1 { background: #e8f4fd; color: var(--blue); }
+    .n2 { background: #eef7ee; color: var(--green); }
+    .n3 { background: #fdf3e7; color: var(--amber); }
+
+    .card-title { font-size: 17px; font-weight: 700; color: var(--text); }
+    .card-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
+    .tag {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      background: #f0f4f8;
+      color: var(--muted);
+    }
+    .tag-co  { background: #e8f4fd; color: var(--blue); }
+    .tag-sub { background: #eef7ee; color: var(--green); }
+    .tag-con { background: #fdf3e7; color: var(--amber); }
+    .tag-plt { background: #f3e8ff; color: #7c3aed; }
+
+    /* Overview */
+    .card-overview {
+      font-size: 14px; color: #475569; line-height: 1.75;
+      padding: var(--s13);
+      background: #f8f9fb;
+      border-radius: 8px;
+      margin-bottom: var(--s13);
+    }
+
+    /* Flow */
+    .section-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--light); letter-spacing: .6px; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .flow-row {
+      display: flex; flex-wrap: wrap;
+      align-items: center; gap: 5px;
+      margin-bottom: var(--s13);
+    }
+    .flow-step {
+      padding: 5px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px; color: #475569;
+      background: #fff;
+    }
+    .flow-arr { color: var(--border); font-size: 16px; }
+
+    /* Stakeholders */
+    .stakeholders {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-bottom: var(--s13);
+    }
+    .stakeholder {
+      flex: 1; min-width: 90px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fafafa;
+      text-align: center;
+    }
+    .sh-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .sh-role { font-size: 10px; color: var(--light); margin-bottom: 4px; }
+    .sh-benefit { font-size: 11px; color: var(--muted); }
+
+    /* Numbers */
+    .numbers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: var(--s13);
+    }
+    .num-item {
+      padding: 10px var(--s13);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #f8f9fb;
+    }
+    .num-label { font-size: 11px; color: var(--light); margin-bottom: 3px; }
+    .num-val   { font-size: 14px; font-weight: 700; color: var(--text); }
+
+    /* Risks */
+    .risks { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: var(--s13); }
+    .risk-tag {
+      padding: 3px 8px;
+      border: 1px solid #fecaca;
+      border-radius: 4px;
+      font-size: 11px;
+      background: #fef2f2;
+      color: var(--red);
+    }
+
+    /* Action */
+    .action-box {
+      padding: 10px var(--s13);
+      background: linear-gradient(135deg, #eef7ee, #e8f4fd);
+      border-radius: 8px;
+    }
+    .action-label { font-size: 11px; font-weight: 600; color: var(--green); margin-bottom: 3px; }
+    .action-text  { font-size: 13px; color: var(--text); }
+
+    /* Error */
+    .error-state {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 13px;
+      padding: var(--s34);
+      text-align: center;
+      color: var(--red);
+    }
+
+    /* API set badge */
+    .api-set-badge {
+      background: #eef7ee;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 10px var(--s13);
+      font-size: 13px;
+      color: var(--green);
+      font-weight: 500;
+      margin-bottom: var(--s21);
+    }
+
+    /* Share box */
+    .share-box {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 8px;
+      padding: var(--s13);
+      margin-bottom: var(--s13);
+    }
+    .share-box-title { font-size: 12px; font-weight: 600; color: #0369a1; margin-bottom: 8px; }
+    .share-url-wrap  { position: relative; }
+    .copy-btn {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      padding: 4px 12px;
+      background: var(--blue); color: #fff;
+      border: none; border-radius: 5px;
+      font-family: inherit; font-size: 12px; font-weight: 600;
+      cursor: pointer;
+    }
+    .copy-btn:hover { background: #1d4ed8; }
+    .share-note { font-size: 11px; color: #0369a1; margin-top: 6px; }
+
+    /* Share toggle button */
+    .share-toggle-btn {
+      width: 100%;
+      padding: 9px;
+      background: var(--card);
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      margin-bottom: var(--s13);
+      transition: all .15s;
+    }
+    .share-toggle-btn:hover { border-color: var(--blue); color: var(--blue); background: #f0f9ff; }
+
+    /* Export bar */
+    .result-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--s13);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .export-btn {
+      padding: 8px 18px;
+      background: var(--card);
+      border: 1.5px solid var(--blue);
+      border-radius: 8px;
+      color: var(--blue);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .export-btn:hover { background: #e8f4fd; }
+
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; }
+      .input-panel { position: static; }
+    }
+
+    @media print {
+      .input-panel { display: none; }
+      .main { grid-template-columns: 1fr; }
+      body { background: #fff; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span>は</span>じめ工房</div>
+  <span class="logo-sep">|</span>
+  <div class="tagline">自動収益システム提案エンジン</div>
+</header>
+
+<div class="main">
+
+  <!-- ─── Input Panel ─── -->
+  <div class="input-panel">
+    <div class="panel-title">リソース・ドメインを入力</div>
+
+    <div class="api-box" id="apiBox">
+      <div class="api-box-title">🔑 Anthropic APIキー</div>
+      <input type="password" id="apiKey" placeholder="sk-ant-...">
+      <div class="api-note">ブラウザに保存しません。セッション中のみ使用。</div>
+    </div>
+    <div class="api-set-badge" id="apiSetBadge" style="display:none">
+      ✅ APIキー設定済み（URLから自動取得）
+    </div>
+
+    <div class="share-box" id="shareBox" style="display:none">
+      <div class="share-box-title">🔗 共有URL</div>
+      <div class="share-url-wrap">
+        <input type="text" id="shareUrlInput" readonly style="font-size:11px;background:#f8f9fb;padding-right:70px">
+        <button class="copy-btn" id="copyBtn" onclick="copyShareUrl()">コピー</button>
+      </div>
+      <div class="share-note">このURLを送るだけで相手はAPIキー入力不要</div>
+    </div>
+
+    <button class="share-toggle-btn" id="shareToggleBtn" onclick="toggleShareBox()">
+      🔗 共有URLを生成
+    </button>
+
+    <div class="form-group">
+      <label>業種・ドメイン</label>
+      <div class="chips" id="domainChips">
+        <div class="chip" data-val="農業・米">農業・米</div>
+        <div class="chip" data-val="美容・化粧品">美容・化粧品</div>
+        <div class="chip" data-val="美容機器">美容機器</div>
+        <div class="chip" data-val="飲食・食品">飲食・食品</div>
+        <div class="chip" data-val="医療・健康">医療・健康</div>
+        <div class="chip" data-val="IT・SaaS">IT・SaaS</div>
+        <div class="chip" data-val="教育・研修">教育・研修</div>
+        <div class="chip" data-val="地域特産品">地域特産品</div>
+      </div>
+      <input type="text" id="domainInput" placeholder="例：農業・米、美容機器、地域特産品…">
+    </div>
+
+    <div class="form-group">
+      <label>あなたのリソース・できること</label>
+      <textarea id="resourceInput" placeholder="例：
+・米農家ネットワーク（新潟・秋田）
+・企業への営業経験
+・美容機器の仕入れルート
+・アンケート設計・効果測定"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>ターゲット（誰に売るか）</label>
+      <input type="text" id="targetInput" placeholder="例：従業員50〜300人の中小企業の人事担当">
+    </div>
+
+    <button class="gen-btn" id="genBtn">
+      3つの自動収益システムを提案する
+    </button>
+  </div>
+
+  <!-- ─── Output Panel ─── -->
+  <div class="output-panel" id="outputPanel">
+    <div class="empty-state">
+      <div class="empty-icon">💡</div>
+      <div class="empty-text">左のフォームに業種・リソースを入力して<br>自動収益システムを生成してください</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ─── Chip selection ───
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      document.getElementById('domainInput').value = chip.dataset.val;
+    });
+  });
+
+  // ─── URL hash: auto-fill API key ───
+  (function initApiKey() {
+    const hash = location.hash.slice(1);
+    const params = new URLSearchParams(hash);
+    const key = params.get('key');
+    if (key) {
+      document.getElementById('apiKey').value = key;
+      document.getElementById('apiBox').style.display = 'none';
+      document.getElementById('apiSetBadge').style.display = 'block';
+    }
+  })();
+
+  // ─── Share URL ───
+  function toggleShareBox() {
+    const box = document.getElementById('shareBox');
+    const key = document.getElementById('apiKey').value.trim();
+    if (!key) { alert('先にAPIキーを入力してください'); return; }
+    const url = location.href.split('#')[0] + '#key=' + encodeURIComponent(key);
+    document.getElementById('shareUrlInput').value = url;
+    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function copyShareUrl() {
+    const input = document.getElementById('shareUrlInput');
+    navigator.clipboard.writeText(input.value).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'コピー済み';
+      setTimeout(() => { btn.textContent = 'コピー'; }, 2000);
+    }).catch(() => {
+      input.select();
+      document.execCommand('copy');
+    });
+  }
+
+  // ─── Stored result for export ───
+  let lastResult = null;
+
+  // ─── Tag color by category ───
+  const TAG_CLASS = {
+    '共創型':           'tag-co',
+    'サブスク型':       'tag-sub',
+    '消耗品型':         'tag-con',
+    'カートリッジ型':   'tag-con',
+    'プラットフォーム型': 'tag-plt',
+    'ライセンス型':     'tag-plt',
+  };
+
+  // ─── Generate ───
+  document.getElementById('genBtn').addEventListener('click', generate);
+
+  async function generate() {
+    const apiKey   = document.getElementById('apiKey').value.trim();
+    const domain   = document.getElementById('domainInput').value.trim();
+    const resource = document.getElementById('resourceInput').value.trim();
+    const target   = document.getElementById('targetInput').value.trim();
+
+    if (!apiKey)   return alert('Anthropic APIキーを入力してください');
+    if (!domain)   return alert('業種・ドメインを入力してください');
+    if (!resource) return alert('リソース・できることを入力してください');
+
+    const btn = document.getElementById('genBtn');
+    const out  = document.getElementById('outputPanel');
+
+    btn.disabled    = true;
+    btn.textContent = '生成中…';
+    out.innerHTML   = `<div class="loading"><div class="spinner"></div><div>自動収益システムを分析中…</div></div>`;
+
+    const SYSTEM = `あなたは自動収益システム・ビジネスモデルの専門アドバイザーです。
+
+【Co-Creation Sales Model（はじめ工房）の理解】
+企業がセミナー費として農家に5,000円支払い → 農家が5分セミナーを実施 → 従業員にお米（5,000円相当）を贈呈
+- 企業：社会保険料ゼロ増（5,769円→5,000円に削減）、経費計上OK、CSR実績
+- 従業員：昇給3,263円より5,000円相当の現物価値。手取りUP体感
+- 農家・生産者：月10〜20万円の新販路
+
+ユーザーの業種・リソースをもとに、3つの自動収益システムを以下のJSON形式で返してください。
+
+【必須ルール】
+1. 提案1はCo-Creation Sales Modelを業種にアレンジした応用版
+2. 提案2・3は業界特化（サブスク、カートリッジ/消耗品、プラットフォーム、ライセンス等）
+3. 数字は具体的（月収〇万〜〇万、利益率〇%）
+4. 循環経済の視点：誰→誰→誰へ価値が流れるかを必ず含める
+5. 説明文なし、JSONのみ返す
+
+【JSON形式】
+{
+  "domain": "業種名",
+  "proposals": [
+    {
+      "title": "モデル名（12文字以内）",
+      "category": "共創型|サブスク型|消耗品型|カートリッジ型|プラットフォーム型|ライセンス型",
+      "benchmark": "参考企業・事例（15文字以内）",
+      "overview": "仕組みの概要（120文字以内）",
+      "circulation": "価値の循環（誰→誰→誰、60文字以内）",
+      "stakeholders": [
+        {"name": "関係者名", "role": "役割（10文字以内）", "benefit": "得られる価値（20文字以内）"}
+      ],
+      "flow": ["ステップ1（15文字以内）", "ステップ2", "ステップ3", "ステップ4"],
+      "numbers": {
+        "initial_cost": "初期コスト",
+        "monthly_revenue": "月次収益目安",
+        "margin": "利益率",
+        "payback": "回収期間"
+      },
+      "risks": ["リスク1（20文字以内）", "リスク2"],
+      "action": "今すぐ始められる最初の一歩（35文字以内）"
+    }
+  ]
+}`;
+
+    const USER = `業種・ドメイン: ${domain}
+保有リソース・できること:
+${resource}
+ターゲット: ${target || '未指定'}
+
+この条件で3つの自動収益システムを提案してください。`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 3000,
+          system: SYSTEM,
+          messages: [{ role: 'user', content: USER }]
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `HTTP ${res.status}`);
+      }
+
+      const data  = await res.json();
+      const text  = data.content[0].text;
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('JSONの解析に失敗しました');
+
+      const result = JSON.parse(match[0]);
+      lastResult = { result, domain, resource, target };
+      renderProposals(result, domain);
+
+    } catch (e) {
+      out.innerHTML = `
+        <div class="error-state">
+          <div style="font-size:32px;margin-bottom:13px">⚠️</div>
+          <div style="font-weight:600;margin-bottom:8px">エラーが発生しました</div>
+          <div style="font-size:13px">${escHtml(e.message)}</div>
+        </div>`;
+    }
+
+    btn.disabled    = false;
+    btn.textContent = '3つの自動収益システムを提案する';
+  }
+
+  // ─── Render ───
+  function renderProposals(result, domain) {
+    const out    = document.getElementById('outputPanel');
+    const props  = result.proposals || [];
+    const numCls = ['n1', 'n2', 'n3'];
+
+    const cards = props.map((p, i) => {
+      const tagCls = TAG_CLASS[p.category] || '';
+      const flows  = (p.flow || []).map((s, si) =>
+        `<div class="flow-step">${escHtml(s)}</div>${si < p.flow.length - 1 ? '<div class="flow-arr">→</div>' : ''}`
+      ).join('');
+      const holders = (p.stakeholders || []).map(s => `
+        <div class="stakeholder">
+          <div class="sh-name">${escHtml(s.name)}</div>
+          <div class="sh-role">${escHtml(s.role)}</div>
+          <div class="sh-benefit">${escHtml(s.benefit)}</div>
+        </div>`).join('');
+      const risks = (p.risks || []).map(r =>
+        `<span class="risk-tag">${escHtml(r)}</span>`
+      ).join('');
+
+      return `
+      <div class="proposal-card">
+        <div class="card-head">
+          <div class="card-num ${numCls[i]}">${i + 1}</div>
+          <div style="flex:1">
+            <div class="card-title">${escHtml(p.title)}</div>
+            <div class="card-tags">
+              <span class="tag ${tagCls}">${escHtml(p.category)}</span>
+              <span class="tag">参考: ${escHtml(p.benchmark)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-overview">${escHtml(p.overview)}</div>
+
+        ${p.circulation ? `
+        <div style="margin-bottom:var(--s13)">
+          <div class="section-label">価値の循環</div>
+          <div style="font-size:13px;color:var(--muted);background:#f8f9fb;padding:8px 13px;border-radius:8px;">
+            🔄 ${escHtml(p.circulation)}
+          </div>
+        </div>` : ''}
+
+        <div style="margin-bottom:var(--s13)">
+          <div class="section-label">フロー</div>
+          <div class="flow-row">${flows}</div>
+        </div>
+
+        <div class="stakeholders">${holders}</div>
+
+        <div class="numbers-grid">
+          <div class="num-item">
+            <div class="num-label">初期コスト</div>
+            <div class="num-val">${escHtml(p.numbers?.initial_cost || '—')}</div>
+          </div>
+          <div class="num-item">
+            <div class="num-label">月次収益目安</div>
+            <div class="num-val">${escHtml(p.numbers?.monthly_revenue || '—')}</div>
+          </div>
+          <div class="num-item">
+            <div class="num-label">利益率</div>
+            <div class="num-val">${escHtml(p.numbers?.margin || '—')}</div>
+          </div>
+          <div class="num-item">
+            <div class="num-label">投資回収</div>
+            <div class="num-val">${escHtml(p.numbers?.payback || '—')}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:var(--s13)">
+          <div class="section-label">リスク</div>
+          <div class="risks">${risks}</div>
+        </div>
+
+        <div class="action-box">
+          <div class="action-label">▶ 最初の一歩</div>
+          <div class="action-text">${escHtml(p.action)}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    out.innerHTML = `
+      <div class="result-bar">
+        <div class="result-meta" style="margin-bottom:0">「${escHtml(domain)}」の自動収益システム提案 — ${new Date().toLocaleDateString('ja-JP')}</div>
+        <button class="export-btn" onclick="exportDocument()">📄 資料を出力</button>
+      </div>
+      ${cards}`;
+  }
+
+  // ─── Export Document ───
+  function exportDocument() {
+    if (!lastResult) return;
+    const { result, domain, resource, target } = lastResult;
+    const props = result.proposals || [];
+    const date  = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const catColor = {
+      '共創型': '#2563eb', 'サブスク型': '#059669',
+      '消耗品型': '#d97706', 'カートリッジ型': '#d97706',
+      'プラットフォーム型': '#7c3aed', 'ライセンス型': '#7c3aed',
+    };
+    const catBg = {
+      '共創型': '#e8f4fd', 'サブスク型': '#eef7ee',
+      '消耗品型': '#fdf3e7', 'カートリッジ型': '#fdf3e7',
+      'プラットフォーム型': '#f3e8ff', 'ライセンス型': '#f3e8ff',
+    };
+    const numBg  = ['#e8f4fd','#eef7ee','#fdf3e7'];
+    const numCol = ['#2563eb','#059669','#d97706'];
+
+    const proposalHtml = props.map((p, i) => {
+      const flows = (p.flow || []).map((s, si) =>
+        `<span class="d-step">${escHtml(s)}</span>${si < p.flow.length - 1 ? '<span class="d-arr">→</span>' : ''}`
+      ).join('');
+      const holders = (p.stakeholders || []).map(s => `
+        <div class="d-sh">
+          <div class="d-sh-name">${escHtml(s.name)}</div>
+          <div class="d-sh-role">${escHtml(s.role)}</div>
+          <div class="d-sh-ben">${escHtml(s.benefit)}</div>
+        </div>`).join('');
+      const risks = (p.risks || []).map(r => `<span class="d-risk">${escHtml(r)}</span>`).join('');
+      const bg  = catBg[p.category]  || '#f0f4f8';
+      const col = catColor[p.category] || '#475569';
+      const nb  = numBg[i]  || '#f0f4f8';
+      const nc  = numCol[i] || '#2563eb';
+
+      return `
+      <div class="d-card" style="border-left:4px solid ${col}">
+        <div class="d-card-head">
+          <div class="d-num" style="background:${nb};color:${nc}">${i + 1}</div>
+          <div style="flex:1">
+            <div class="d-title">${escHtml(p.title)}</div>
+            <div class="d-tags">
+              <span class="d-tag" style="background:${bg};color:${col}">${escHtml(p.category)}</span>
+              <span class="d-tag">参考: ${escHtml(p.benchmark)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-overview">${escHtml(p.overview)}</div>
+
+        ${p.circulation ? `
+        <div class="d-row" style="margin-bottom:10px">
+          <div class="d-label">価値の循環</div>
+          <div class="d-circ">🔄 ${escHtml(p.circulation)}</div>
+        </div>` : ''}
+
+        <div class="d-row" style="margin-bottom:10px">
+          <div class="d-label">フロー</div>
+          <div class="d-flow">${flows}</div>
+        </div>
+
+        <div class="d-row" style="margin-bottom:10px">
+          <div class="d-label">関係者と価値</div>
+          <div class="d-holders">${holders}</div>
+        </div>
+
+        <div class="d-nums">
+          <div class="d-num-item">
+            <div class="d-num-label">初期コスト</div>
+            <div class="d-num-val">${escHtml(p.numbers?.initial_cost || '—')}</div>
+          </div>
+          <div class="d-num-item">
+            <div class="d-num-label">月次収益目安</div>
+            <div class="d-num-val">${escHtml(p.numbers?.monthly_revenue || '—')}</div>
+          </div>
+          <div class="d-num-item">
+            <div class="d-num-label">利益率</div>
+            <div class="d-num-val">${escHtml(p.numbers?.margin || '—')}</div>
+          </div>
+          <div class="d-num-item">
+            <div class="d-num-label">投資回収</div>
+            <div class="d-num-val">${escHtml(p.numbers?.payback || '—')}</div>
+          </div>
+        </div>
+
+        <div class="d-row" style="margin-bottom:10px">
+          <div class="d-label">リスク</div>
+          <div>${risks}</div>
+        </div>
+
+        <div class="d-action">
+          <span class="d-action-label">▶ 最初の一歩</span>
+          ${escHtml(p.action)}
+        </div>
+      </div>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>自動収益システム提案書｜${escHtml(domain)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+@page { size: A4; margin: 18mm 16mm; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Sans JP', 'Yu Gothic', sans-serif;
+  background: #fff;
+  color: #1e293b;
+  font-size: 10pt;
+  line-height: 1.6;
+}
+
+/* Print button */
+.print-bar {
+  position: fixed; top: 0; left: 0; right: 0;
+  background: #1e293b; color: #fff;
+  padding: 10px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  z-index: 100;
+  font-size: 13px;
+}
+.print-bar button {
+  padding: 7px 20px;
+  background: #2563eb; color: #fff;
+  border: none; border-radius: 6px;
+  font-family: inherit; font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.print-bar button:hover { background: #1d4ed8; }
+
+/* Page wrapper */
+.page { max-width: 800px; margin: 0 auto; padding: 60px 0 40px; }
+
+/* Cover */
+.cover {
+  padding-bottom: 24px;
+  border-bottom: 2px solid #e0e8f0;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.cover-left {}
+.cover-logo { font-size: 16pt; font-weight: 700; color: #2563eb; margin-bottom: 4px; }
+.cover-logo span { color: #f59e0b; }
+.cover-doc-type { font-size: 9pt; color: #94a3b8; letter-spacing: .5px; }
+.cover-title { font-size: 18pt; font-weight: 700; color: #1e293b; margin-top: 16px; margin-bottom: 6px; }
+.cover-sub { font-size: 12pt; color: #2563eb; font-weight: 600; }
+.cover-right { text-align: right; }
+.cover-date { font-size: 10pt; color: #64748b; margin-bottom: 8px; }
+.cover-contact { font-size: 9pt; color: #94a3b8; }
+
+/* Resource summary */
+.summary-bar {
+  background: #f8f9fb;
+  border: 1px solid #e0e8f0;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.summary-item-label { font-size: 9pt; color: #94a3b8; margin-bottom: 2px; }
+.summary-item-val   { font-size: 10pt; color: #1e293b; }
+
+/* Section heading */
+.section-heading {
+  font-size: 10pt; font-weight: 700;
+  color: #94a3b8; letter-spacing: .8px; text-transform: uppercase;
+  margin-bottom: 16px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e0e8f0;
+}
+
+/* Proposal card */
+.d-card {
+  border: 1px solid #e0e8f0;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+.d-card-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+.d-num {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13pt; flex-shrink: 0;
+}
+.d-title { font-size: 14pt; font-weight: 700; color: #1e293b; }
+.d-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 4px; }
+.d-tag {
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 8pt; background: #f0f4f8; color: #64748b;
+}
+
+.d-overview {
+  font-size: 10pt; color: #475569; line-height: 1.75;
+  padding: 10px 12px;
+  background: #f8f9fb;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.d-label {
+  font-size: 8pt; font-weight: 600; color: #94a3b8;
+  letter-spacing: .5px; text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.d-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.d-step {
+  padding: 3px 8px; border: 1px solid #e0e8f0;
+  border-radius: 4px; font-size: 9pt; color: #475569; background: #fff;
+}
+.d-arr { color: #cbd5e1; font-size: 12pt; }
+
+.d-circ {
+  font-size: 10pt; color: #475569;
+  background: #f8f9fb; padding: 6px 10px; border-radius: 6px;
+}
+
+.d-holders { display: flex; gap: 6px; flex-wrap: wrap; }
+.d-sh {
+  flex: 1; min-width: 80px; padding: 8px;
+  border: 1px solid #e0e8f0; border-radius: 6px;
+  background: #fafafa; text-align: center;
+}
+.d-sh-name { font-size: 9pt; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
+.d-sh-role { font-size: 8pt; color: #94a3b8; margin-bottom: 3px; }
+.d-sh-ben  { font-size: 8.5pt; color: #64748b; }
+
+.d-nums {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 6px; margin-bottom: 10px;
+}
+.d-num-item {
+  padding: 8px 10px;
+  border: 1px solid #e0e8f0; border-radius: 6px;
+  background: #f8f9fb;
+}
+.d-num-label { font-size: 8pt; color: #94a3b8; margin-bottom: 2px; }
+.d-num-val   { font-size: 10pt; font-weight: 700; color: #1e293b; }
+
+.d-risk {
+  padding: 2px 7px;
+  border: 1px solid #fecaca; border-radius: 3px;
+  font-size: 8.5pt; background: #fef2f2; color: #dc2626;
+  margin-right: 4px; margin-bottom: 2px; display: inline-block;
+}
+
+.d-action {
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #eef7ee, #e8f4fd);
+  border-radius: 6px;
+  font-size: 10pt; color: #1e293b;
+}
+.d-action-label {
+  font-size: 8pt; font-weight: 600; color: #059669; margin-right: 6px;
+}
+
+/* Footer */
+.doc-footer {
+  border-top: 1px solid #e0e8f0;
+  padding-top: 14px;
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8.5pt;
+  color: #94a3b8;
+}
+
+@media print {
+  .print-bar { display: none; }
+  .page { padding-top: 0; }
+  body { background: #fff; }
+}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>自動収益システム提案書｜${escHtml(domain)}</span>
+  <button onclick="window.print()">🖨️ 印刷 / PDF保存</button>
+</div>
+
+<div class="page">
+  <!-- Cover -->
+  <div class="cover">
+    <div class="cover-left">
+      <div class="cover-logo"><span>は</span>じめ工房</div>
+      <div class="cover-doc-type">Co-Creation Sales Model / Revenue Architecture</div>
+      <div class="cover-title">自動収益システム提案書</div>
+      <div class="cover-sub">${escHtml(domain)}</div>
+    </div>
+    <div class="cover-right">
+      <div class="cover-date">${date}</div>
+      <div class="cover-contact">ishikawa@hajime-create.jp</div>
+    </div>
+  </div>
+
+  <!-- Resource summary -->
+  <div class="summary-bar">
+    <div>
+      <div class="summary-item-label">業種・ドメイン</div>
+      <div class="summary-item-val">${escHtml(domain)}</div>
+    </div>
+    <div>
+      <div class="summary-item-label">ターゲット</div>
+      <div class="summary-item-val">${escHtml(target || '未指定')}</div>
+    </div>
+    <div style="grid-column:1/-1">
+      <div class="summary-item-label">保有リソース・できること</div>
+      <div class="summary-item-val" style="white-space:pre-wrap">${escHtml(resource)}</div>
+    </div>
+  </div>
+
+  <div class="section-heading">3つの自動収益モデル提案</div>
+  ${proposalHtml}
+
+  <div class="doc-footer">
+    <span>合同会社はじめ工房　代表：石川 創（はじめ）</span>
+    <span>${date}</span>
+  </div>
+</div>
+</body>
+</html>`;
+
+    const win = window.open('', '_blank');
+    if (!win) { alert('ポップアップがブロックされています。ブラウザの設定を確認してください。'); return; }
+    win.document.write(html);
+    win.document.close();
+  }
+
+  function escHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
