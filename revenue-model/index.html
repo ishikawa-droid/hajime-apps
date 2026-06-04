@@ -517,13 +517,18 @@
   })();
 
   // ─── Share URL ───
+  const PAGES_BASE = 'https://ishikawa-droid.github.io/hajime-apps/revenue-model/';
+
   function toggleShareBox() {
     const box = document.getElementById('shareBox');
     const key = document.getElementById('apiKey').value.trim();
     if (!key) { alert('先にAPIキーを入力してください'); return; }
-    const url = location.href.split('#')[0] + '#key=' + encodeURIComponent(key);
+    const base = location.hostname === 'ishikawa-droid.github.io'
+      ? location.href.split('#')[0]
+      : PAGES_BASE;
+    const url = base + '#key=' + encodeURIComponent(key);
     document.getElementById('shareUrlInput').value = url;
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    box.style.display = box.style.display === 'none' ? 'none' : 'block';
   }
 
   function copyShareUrl() {
