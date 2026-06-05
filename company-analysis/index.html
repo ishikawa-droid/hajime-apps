@@ -217,7 +217,6 @@
     try { key = decodeURIComponent(rawEncoded).trim(); } catch(e) { key = rawEncoded.trim(); }
     if (!key) return;
     document.getElementById('apiKey').value = key;
-    document.getElementById('apiBox' in window ? 'apiBox' : 'apiKey').closest
     document.querySelector('.api-box').style.display = 'none';
     const badge = document.getElementById('apiSetBadge');
     badge.style.display = 'block';
