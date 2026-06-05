@@ -130,6 +130,11 @@
     .spinner-sm { width:24px; height:24px; border:2.5px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin 1s linear infinite; flex-shrink:0; }
     @keyframes spin { to{transform:rotate(360deg)} }
 
+    /* Capability chips */
+    .chip { padding:4px 11px; border:1px solid var(--border); border-radius:20px; font-size:11px; cursor:pointer; background:#f0f4f8; color:var(--muted); transition:all .15s; user-select:none; }
+    .chip:hover { background:#e8f4fd; border-color:var(--blue); color:var(--blue); }
+    .chip.active { background:#e8f4fd; border-color:var(--blue); color:var(--blue); font-weight:600; }
+
     @media (max-width:900px) { .main{grid-template-columns:1fr} .input-panel{position:static} }
     @media print { .input-panel{display:none} .main{grid-template-columns:1fr} body{background:#fff} }
   </style>
@@ -157,6 +162,22 @@
 
     <div class="url-list" id="urlList"></div>
     <button class="add-btn" id="addBtn" onclick="addUrlRow()">＋ 会社を追加（残り <span id="remaining">8</span>社）</button>
+
+    <div style="margin-bottom:var(--s21)">
+      <label style="display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px">
+        ＋ あなたのリソース・できること
+        <span style="font-size:11px;font-weight:400;color:var(--light)">（全社共通で提案に反映）</span>
+      </label>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px" id="capChips">
+        <div class="chip" data-val="農家・生産者とのネットワーク">農家ネットワーク</div>
+        <div class="chip" data-val="企業への法人営業経験">法人営業経験</div>
+        <div class="chip" data-val="アンケート設計・効果測定">アンケート設計</div>
+        <div class="chip" data-val="美容機器の仕入れルート">美容機器仕入れ</div>
+        <div class="chip" data-val="セミナー・研修の企画運営">セミナー企画</div>
+        <div class="chip" data-val="IT・Web制作・システム開発">IT・Web開発</div>
+      </div>
+      <textarea id="capInput" placeholder="例：&#10;・米農家ネットワーク（新潟・秋田）&#10;・中小企業への営業実績&#10;・AI活用ツールの提供" style="width:100%;height:90px;padding:10px 13px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;color:var(--text);background:#fafafa;resize:vertical;line-height:1.6"></textarea>
+    </div>
 
     <button class="gen-btn" id="genBtn">分析スタート</button>
     <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -241,6 +262,18 @@
   // Initial row
   addUrlRow();
 
+  // ─── Capability chips ───
+  document.querySelectorAll('#capChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      chip.classList.toggle('active');
+      const active = [...document.querySelectorAll('#capChips .chip.active')]
+        .map(c => '・' + c.dataset.val);
+      const manual = document.getElementById('capInput').value
+        .split('\n').filter(l => !l.startsWith('・') || active.some(a => l.includes(a.slice(1))));
+      document.getElementById('capInput').value = [...active, ...manual.filter(l => !l.startsWith('・'))].join('\n');
+    });
+  });
+
   // ─── Main: analyze ───
   document.getElementById('genBtn').addEventListener('click', analyzeAll);
 
@@ -251,6 +284,8 @@
     const urls = [...document.querySelectorAll('.url-row input')]
       .map(i => i.value.trim()).filter(Boolean);
     if (!urls.length) return alert('URLを1件以上入力してください');
+
+    const capabilities = document.getElementById('capInput').value.trim();
 
     results = [];
     const out = document.getElementById('outputPanel');
@@ -284,7 +319,7 @@
     await Promise.allSettled(urls.map(async (url, i) => {
       try {
         const info = await fetchCompanyInfo(url);
-        const data = await analyzeCompany(apiKey, url, info);
+        const data = await analyzeCompany(apiKey, url, info, capabilities);
         results[i] = { url, data };
         renderCompanyCard(i, url, data);
       } catch(e) {
@@ -331,7 +366,7 @@
   }
 
   // ─── Analyze with Claude ───
-  async function analyzeCompany(apiKey, url, pageText) {
+  async function analyzeCompany(apiKey, url, pageText, capabilities) {
     const SYSTEM = `あなたはビジネスアナリスト兼自動収益システム専門家です。
 
 【Co-Creation Sales Model（はじめ工房）の理解】
@@ -373,7 +408,10 @@
 ホームページ内容:
 ${pageText || '（取得できませんでした。URLとドメイン名から推測してください）'}
 
-この会社のCo-Creation Sales Model活用方法と3つの自動収益システムを提案してください。`;
+【提案者（システム使用者）のリソース・できること】
+${capabilities || '（未入力）'}
+
+上記のリソースをこの会社と掛け合わせる前提で、Co-Creation Sales Model活用方法と3つの自動収益システムを提案してください。`;
 
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method:'POST',
