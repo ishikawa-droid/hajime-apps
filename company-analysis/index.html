@@ -121,6 +121,17 @@
     .action-label { font-size:10px; font-weight:600; color:var(--green); margin-bottom:2px; }
     .action-text { font-size:12px; }
 
+    /* Collaboration section */
+    .collab-section { background:linear-gradient(135deg,#f0fdf4,#ecfdf5); border:1px solid #6ee7b7; border-radius:10px; padding:var(--s13) var(--s21); margin-bottom:var(--s21); }
+    .collab-title { font-size:13px; font-weight:700; color:#065f46; margin-bottom:var(--s13); display:flex; align-items:center; gap:6px; }
+    .collab-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+    .collab-item { background:#fff; border:1px solid #a7f3d0; border-radius:7px; padding:9px 12px; }
+    .collab-label { font-size:10px; font-weight:600; color:#059669; margin-bottom:3px; }
+    .collab-val   { font-size:12px; color:var(--text); line-height:1.5; }
+    .collab-approach { background:#fff; border:1px solid #a7f3d0; border-radius:7px; padding:10px 13px; }
+    .collab-approach-label { font-size:10px; font-weight:600; color:#059669; margin-bottom:4px; }
+    .collab-approach-text  { font-size:13px; color:var(--text); font-weight:500; line-height:1.6; }
+
     /* Company card export btn */
     .co-export-btn { display:block; width:100%; padding:9px; background:var(--card); border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:13px; color:var(--muted); cursor:pointer; margin-top:var(--s13); transition:all .15s; text-align:center; }
     .co-export-btn:hover { border-color:var(--blue); color:var(--blue); }
@@ -385,6 +396,14 @@
     "できること②（40文字以内）",
     "できること③（40文字以内）"
   ],
+  "collaboration": {
+    "type": "協業形態（例：代理店契約・業務委託・共同開発・パートナー契約、15文字以内）",
+    "value_we_offer": "提案者が提供できる価値（50文字以内）",
+    "value_they_offer": "相手が提供できる価値（50文字以内）",
+    "approach": "最初のアプローチ方法・提案文句（60文字以内）",
+    "expected_revenue": "期待収益目安（例：月5〜15万円）",
+    "timeline": "協業開始までの期間目安（例：1〜3ヶ月）"
+  },
   "proposals": [
     {
       "title": "モデル名（12文字以内）",
@@ -401,7 +420,7 @@
   ]
 }
 
-必須：提案1はCo-Creation Sales Model応用版、提案2・3は業界特化。数字は具体的に。`;
+必須：提案1はCo-Creation Sales Model応用版、提案2・3は業界特化。数字は具体的に。collaborationは提案者のリソースを踏まえた実践的な協業シナリオにする。`;
 
     const USER = `会社URL: ${url}
 ホームページ内容:
@@ -490,6 +509,34 @@ ${capabilities || '（未入力）'}
         <div>${escHtml(c)}</div>
       </div>`).join('');
 
+    const cl = d.collaboration || {};
+    const collabHtml = `
+      <div class="collab-section">
+        <div class="collab-title">🤝 協業プラン</div>
+        <div class="collab-grid">
+          <div class="collab-item">
+            <div class="collab-label">協業形態</div>
+            <div class="collab-val">${escHtml(cl.type||'—')}</div>
+          </div>
+          <div class="collab-item">
+            <div class="collab-label">期待収益 / 期間</div>
+            <div class="collab-val">${escHtml(cl.expected_revenue||'—')} / ${escHtml(cl.timeline||'—')}</div>
+          </div>
+          <div class="collab-item">
+            <div class="collab-label">こちらが提供できる価値</div>
+            <div class="collab-val">${escHtml(cl.value_we_offer||'—')}</div>
+          </div>
+          <div class="collab-item">
+            <div class="collab-label">相手が提供できる価値</div>
+            <div class="collab-val">${escHtml(cl.value_they_offer||'—')}</div>
+          </div>
+        </div>
+        <div class="collab-approach">
+          <div class="collab-approach-label">▶ 最初のアプローチ</div>
+          <div class="collab-approach-text">${escHtml(cl.approach||'—')}</div>
+        </div>
+      </div>`;
+
     const card = document.createElement('div');
     card.className = 'company-card';
     card.id = 'card-' + i;
@@ -504,6 +551,7 @@ ${capabilities || '（未入力）'}
       </div>
       <div class="company-body">
         <div style="font-size:13px;color:var(--muted);margin-bottom:var(--s13);line-height:1.7">${escHtml(d.business_summary||'')}</div>
+        ${collabHtml}
         <div class="cando-section">
           <div class="cando-title">💡 このシステムを活用するとできること</div>
           ${cando}
@@ -559,6 +607,7 @@ ${capabilities || '（未入力）'}
 
     const companySections = items.map((r, ri) => {
       const d = r.data;
+      const cl = d.collaboration || {};
       const cando = (d.co_creation_comments||[]).map((c,ci)=>`
         <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:9.5pt">
           <div style="width:18px;height:18px;border-radius:50%;background:#0369a1;color:#fff;font-size:10pt;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ci+1}</div>
@@ -625,6 +674,31 @@ ${capabilities || '（未入力）'}
           </div>
           <div style="padding:16px 20px">
             <div style="font-size:9.5pt;color:#475569;line-height:1.7;margin-bottom:14px">${escHtml(d.business_summary||'')}</div>
+            <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1px solid #6ee7b7;border-radius:8px;padding:12px 16px;margin-bottom:14px;page-break-inside:avoid;break-inside:avoid">
+              <div style="font-size:10pt;font-weight:700;color:#065f46;margin-bottom:10px">🤝 協業プラン</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:9px">
+                <div style="background:#fff;border:1px solid #a7f3d0;border-radius:6px;padding:8px 11px">
+                  <div style="font-size:8pt;font-weight:600;color:#059669;margin-bottom:2px">協業形態</div>
+                  <div style="font-size:9.5pt">${escHtml(cl.type||'—')}</div>
+                </div>
+                <div style="background:#fff;border:1px solid #a7f3d0;border-radius:6px;padding:8px 11px">
+                  <div style="font-size:8pt;font-weight:600;color:#059669;margin-bottom:2px">期待収益 / 期間</div>
+                  <div style="font-size:9.5pt">${escHtml(cl.expected_revenue||'—')} / ${escHtml(cl.timeline||'—')}</div>
+                </div>
+                <div style="background:#fff;border:1px solid #a7f3d0;border-radius:6px;padding:8px 11px">
+                  <div style="font-size:8pt;font-weight:600;color:#059669;margin-bottom:2px">こちらが提供できる価値</div>
+                  <div style="font-size:9.5pt">${escHtml(cl.value_we_offer||'—')}</div>
+                </div>
+                <div style="background:#fff;border:1px solid #a7f3d0;border-radius:6px;padding:8px 11px">
+                  <div style="font-size:8pt;font-weight:600;color:#059669;margin-bottom:2px">相手が提供できる価値</div>
+                  <div style="font-size:9.5pt">${escHtml(cl.value_they_offer||'—')}</div>
+                </div>
+              </div>
+              <div style="background:#fff;border:1px solid #a7f3d0;border-radius:6px;padding:9px 12px">
+                <div style="font-size:8pt;font-weight:600;color:#059669;margin-bottom:3px">▶ 最初のアプローチ</div>
+                <div style="font-size:10pt;font-weight:500">${escHtml(cl.approach||'—')}</div>
+              </div>
+            </div>
             <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;margin-bottom:16px">
               <div style="font-size:10pt;font-weight:700;color:#0369a1;margin-bottom:8px">💡 このシステムを活用するとできること</div>
               ${cando}
