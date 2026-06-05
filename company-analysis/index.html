@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>複数社 自動収益システム提案｜はじめ工房</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --blue:#2563eb; --teal:#0891b2; --green:#059669; --amber:#d97706; --red:#dc2626; --purple:#7c3aed;
+      --bg:#f8f9fb; --card:#ffffff; --border:#e0e8f0; --text:#1e293b; --muted:#64748b; --light:#94a3b8;
+      --s8:8px; --s13:13px; --s21:21px; --s34:34px; --s55:55px;
+    }
+    body { font-family:'Noto Sans JP','Yu Gothic',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* Header */
+    header { background:var(--card); border-bottom:1px solid var(--border); padding:var(--s13) var(--s34); display:flex; align-items:center; gap:var(--s13); }
+    .logo { font-size:18px; font-weight:700; color:var(--blue); }
+    .logo span { color:#f59e0b; }
+    .tagline { font-size:13px; color:var(--muted); }
+
+    /* Layout */
+    .main { max-width:1340px; margin:0 auto; padding:var(--s21); display:grid; grid-template-columns:38% 1fr; gap:var(--s21); align-items:start; }
+
+    /* Input Panel */
+    .input-panel { background:var(--card); border:1px solid var(--border); border-radius:13px; padding:var(--s21); position:sticky; top:var(--s21); }
+    .panel-title { font-size:15px; font-weight:700; padding-bottom:var(--s13); border-bottom:2px solid #e8f4fd; margin-bottom:var(--s21); }
+
+    /* API box */
+    .api-box { background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:var(--s13); margin-bottom:var(--s21); }
+    .api-box-title { font-size:12px; font-weight:600; color:#92400e; margin-bottom:6px; }
+    .api-note { font-size:11px; color:#a16207; margin-top:5px; }
+    .api-set-badge { background:#eef7ee; border:1px solid #bbf7d0; border-radius:8px; padding:10px var(--s13); font-size:13px; color:var(--green); font-weight:500; margin-bottom:var(--s21); display:none; }
+
+    /* URL inputs */
+    .url-list { margin-bottom:var(--s13); }
+    .url-row { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+    .url-row .num { width:24px; height:24px; border-radius:50%; background:#e8f4fd; color:var(--blue); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .url-row input { flex:1; padding:9px var(--s13); border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:13px; color:var(--text); background:#fafafa; transition:border-color .2s; }
+    .url-row input:focus { outline:none; border-color:var(--blue); background:#fff; }
+    .url-row input.loading { border-color:var(--amber); }
+    .url-row input.done    { border-color:var(--green); }
+    .url-row input.error   { border-color:var(--red); }
+    .del-btn { width:28px; height:28px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--light); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .del-btn:hover { border-color:var(--red); color:var(--red); }
+    .add-btn { width:100%; padding:8px; border:1.5px dashed var(--border); border-radius:8px; background:var(--card); font-family:inherit; font-size:13px; color:var(--muted); cursor:pointer; margin-bottom:var(--s21); transition:all .15s; }
+    .add-btn:hover { border-color:var(--blue); color:var(--blue); }
+    .add-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+    /* Buttons */
+    .gen-btn { width:100%; padding:var(--s13); background:linear-gradient(135deg,var(--blue),var(--teal)); color:#fff; border:none; border-radius:10px; font-family:inherit; font-size:15px; font-weight:700; cursor:pointer; transition:opacity .2s,transform .2s; }
+    .gen-btn:hover:not(:disabled) { opacity:.88; transform:translateY(-1px); }
+    .gen-btn:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+
+    /* Progress */
+    .progress-bar { height:4px; background:var(--border); border-radius:2px; margin-top:var(--s13); overflow:hidden; display:none; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,var(--blue),var(--teal)); border-radius:2px; transition:width .3s; }
+    .progress-text { font-size:12px; color:var(--muted); margin-top:5px; display:none; text-align:center; }
+
+    /* Output Panel */
+    .output-panel { min-height:400px; }
+    .empty-state { background:var(--card); border:2px dashed var(--border); border-radius:13px; padding:var(--s55) var(--s34); text-align:center; color:var(--light); }
+    .empty-icon { font-size:52px; margin-bottom:var(--s13); }
+    .empty-text { font-size:15px; line-height:1.8; }
+
+    /* Export all button */
+    .export-all-btn { width:100%; padding:var(--s13); background:linear-gradient(135deg,var(--green),var(--teal)); color:#fff; border:none; border-radius:10px; font-family:inherit; font-size:15px; font-weight:700; cursor:pointer; margin-bottom:var(--s21); transition:opacity .2s,transform .2s; display:none; }
+    .export-all-btn:hover { opacity:.88; transform:translateY(-1px); }
+
+    /* Company card */
+    .company-card { background:var(--card); border:1px solid var(--border); border-radius:13px; margin-bottom:var(--s21); overflow:hidden; animation:fadeUp .4s ease both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+    .company-header { padding:var(--s13) var(--s21); background:linear-gradient(135deg,#f8f9fb,#f0f4f8); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:var(--s13); }
+    .co-num { width:36px; height:36px; border-radius:50%; background:var(--blue); color:#fff; font-weight:700; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .co-name { font-size:16px; font-weight:700; color:var(--text); }
+    .co-url  { font-size:11px; color:var(--light); }
+    .co-industry { margin-left:auto; padding:3px 10px; border-radius:20px; background:#e8f4fd; color:var(--blue); font-size:12px; font-weight:600; white-space:nowrap; }
+
+    .company-body { padding:var(--s21); }
+
+    /* Can-do section */
+    .cando-section { background:#f0f9ff; border:1px solid #bae6fd; border-radius:10px; padding:var(--s13) var(--s21); margin-bottom:var(--s21); }
+    .cando-title { font-size:13px; font-weight:700; color:#0369a1; margin-bottom:10px; }
+    .cando-item { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; font-size:13px; color:var(--text); line-height:1.6; }
+    .cando-item:last-child { margin-bottom:0; }
+    .cando-dot { width:20px; height:20px; border-radius:50%; background:#0369a1; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+
+    /* Section heading inside card */
+    .proposals-heading { font-size:12px; font-weight:600; color:var(--light); letter-spacing:.6px; text-transform:uppercase; margin-bottom:var(--s13); padding-bottom:6px; border-bottom:1px solid var(--border); }
+
+    /* Proposal card (inner) */
+    .proposal-card { border:1px solid var(--border); border-radius:10px; padding:var(--s13) var(--s21); margin-bottom:var(--s13); }
+    .card-head { display:flex; align-items:flex-start; gap:var(--s13); margin-bottom:10px; }
+    .card-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; }
+    .n1{background:#e8f4fd;color:var(--blue)} .n2{background:#eef7ee;color:var(--green)} .n3{background:#fdf3e7;color:var(--amber)}
+    .card-title { font-size:15px; font-weight:700; }
+    .card-tags { display:flex; gap:5px; flex-wrap:wrap; margin-top:4px; }
+    .tag { padding:2px 8px; border-radius:4px; font-size:11px; background:#f0f4f8; color:var(--muted); }
+    .tag-co{background:#e8f4fd;color:var(--blue)} .tag-sub{background:#eef7ee;color:var(--green)} .tag-con{background:#fdf3e7;color:var(--amber)} .tag-plt{background:#f3e8ff;color:var(--purple)}
+    .card-overview { font-size:13px; color:#475569; line-height:1.75; padding:10px var(--s13); background:#f8f9fb; border-radius:6px; margin-bottom:10px; }
+    .section-label { font-size:10px; font-weight:600; color:var(--light); letter-spacing:.6px; text-transform:uppercase; margin-bottom:6px; }
+    .flow-row { display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-bottom:10px; }
+    .flow-step { padding:4px 9px; border:1px solid var(--border); border-radius:5px; font-size:11px; color:#475569; background:#fff; }
+    .flow-arr { color:var(--border); font-size:14px; }
+    .stakeholders { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+    .stakeholder { flex:1; min-width:80px; padding:8px; border:1px solid var(--border); border-radius:7px; background:#fafafa; text-align:center; }
+    .sh-name { font-size:11px; font-weight:600; margin-bottom:2px; }
+    .sh-role { font-size:9px; color:var(--light); margin-bottom:3px; }
+    .sh-benefit { font-size:10px; color:var(--muted); }
+    .numbers-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px; }
+    .num-item { padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:#f8f9fb; }
+    .num-label { font-size:10px; color:var(--light); margin-bottom:2px; }
+    .num-val   { font-size:12px; font-weight:700; }
+    .circ-box { font-size:12px; color:var(--muted); background:#f8f9fb; padding:7px 10px; border-radius:6px; margin-bottom:10px; }
+    .risks { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; }
+    .risk-tag { padding:2px 7px; border:1px solid #fecaca; border-radius:4px; font-size:10px; background:#fef2f2; color:var(--red); }
+    .action-box { padding:8px 12px; background:linear-gradient(135deg,#eef7ee,#e8f4fd); border-radius:6px; }
+    .action-label { font-size:10px; font-weight:600; color:var(--green); margin-bottom:2px; }
+    .action-text { font-size:12px; }
+
+    /* Company card export btn */
+    .co-export-btn { display:block; width:100%; padding:9px; background:var(--card); border:1.5px solid var(--border); border-radius:8px; font-family:inherit; font-size:13px; color:var(--muted); cursor:pointer; margin-top:var(--s13); transition:all .15s; text-align:center; }
+    .co-export-btn:hover { border-color:var(--blue); color:var(--blue); }
+
+    /* Loading card */
+    .loading-card { background:var(--card); border:1px solid var(--border); border-radius:13px; padding:var(--s34); margin-bottom:var(--s21); display:flex; align-items:center; gap:var(--s13); }
+    .spinner-sm { width:24px; height:24px; border:2.5px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin 1s linear infinite; flex-shrink:0; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    @media (max-width:900px) { .main{grid-template-columns:1fr} .input-panel{position:static} }
+    @media print { .input-panel{display:none} .main{grid-template-columns:1fr} body{background:#fff} }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span>は</span>じめ工房</div>
+  <span style="color:var(--border);margin:0 4px">|</span>
+  <div class="tagline">複数社 自動収益システム提案エンジン（最大9社）</div>
+</header>
+
+<div class="main">
+
+  <!-- Input Panel -->
+  <div class="input-panel">
+    <div class="panel-title">会社URLを入力（最大9社）</div>
+
+    <div class="api-box">
+      <div class="api-box-title">🔑 Anthropic APIキー</div>
+      <input type="password" id="apiKey" placeholder="sk-ant-...">
+      <div class="api-note">ブラウザに保存しません。セッション中のみ使用。</div>
+    </div>
+    <div class="api-set-badge" id="apiSetBadge"></div>
+
+    <div class="url-list" id="urlList"></div>
+    <button class="add-btn" id="addBtn" onclick="addUrlRow()">＋ 会社を追加（残り <span id="remaining">8</span>社）</button>
+
+    <button class="gen-btn" id="genBtn">分析スタート</button>
+    <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+
+  <!-- Output Panel -->
+  <div class="output-panel" id="outputPanel">
+    <div class="empty-state">
+      <div class="empty-icon">🏢</div>
+      <div class="empty-text">会社のホームページURLを入力して<br>自動収益システムを提案します</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ─── Constants ───
+  const MAX = 9;
+  const PROXY = 'https://api.allorigins.win/get?url=';
+  const PAGES_BASE = 'https://ishikawa-droid.github.io/hajime-apps/company-analysis/';
+
+  const TAG_CLASS = {
+    '共創型':'tag-co','サブスク型':'tag-sub','消耗品型':'tag-con',
+    'カートリッジ型':'tag-con','プラットフォーム型':'tag-plt','ライセンス型':'tag-plt',
+  };
+
+  let results = [];
+
+  // ─── URL hash: auto-fill API key ───
+  (function initApiKey() {
+    const fullHash = location.hash;
+    if (!fullHash || !fullHash.includes('key=')) return;
+    const afterKey = fullHash.slice(fullHash.indexOf('key=') + 4);
+    const rawEncoded = afterKey.split('&')[0];
+    let key;
+    try { key = decodeURIComponent(rawEncoded).trim(); } catch(e) { key = rawEncoded.trim(); }
+    if (!key) return;
+    document.getElementById('apiKey').value = key;
+    document.getElementById('apiBox' in window ? 'apiBox' : 'apiKey').closest
+    document.querySelector('.api-box').style.display = 'none';
+    const badge = document.getElementById('apiSetBadge');
+    badge.style.display = 'block';
+    badge.textContent = '✅ APIキー設定済み（' + key.slice(0, 14) + '…）';
+  })();
+
+  // ─── URL row management ───
+  function addUrlRow(val = '') {
+    const list = document.getElementById('urlList');
+    const count = list.children.length;
+    if (count >= MAX) return;
+
+    const idx = count + 1;
+    const row = document.createElement('div');
+    row.className = 'url-row';
+    row.innerHTML = `
+      <div class="num">${idx}</div>
+      <input type="url" placeholder="https://example.com" value="${val}" />
+      <button class="del-btn" onclick="removeUrlRow(this)" title="削除">×</button>`;
+    list.appendChild(row);
+    updateAddBtn();
+    reindexRows();
+  }
+
+  function removeUrlRow(btn) {
+    btn.closest('.url-row').remove();
+    reindexRows();
+    updateAddBtn();
+  }
+
+  function reindexRows() {
+    document.querySelectorAll('.url-row .num').forEach((el, i) => { el.textContent = i + 1; });
+  }
+
+  function updateAddBtn() {
+    const count = document.getElementById('urlList').children.length;
+    const btn = document.getElementById('addBtn');
+    btn.disabled = count >= MAX;
+    document.getElementById('remaining').textContent = MAX - count;
+  }
+
+  // Initial row
+  addUrlRow();
+
+  // ─── Main: analyze ───
+  document.getElementById('genBtn').addEventListener('click', analyzeAll);
+
+  async function analyzeAll() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) return alert('Anthropic APIキーを入力してください');
+
+    const urls = [...document.querySelectorAll('.url-row input')]
+      .map(i => i.value.trim()).filter(Boolean);
+    if (!urls.length) return alert('URLを1件以上入力してください');
+
+    results = [];
+    const out = document.getElementById('outputPanel');
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true; btn.textContent = '分析中…';
+
+    document.getElementById('progressBar').style.display = 'block';
+    document.getElementById('progressText').style.display = 'block';
+
+    // Clear output, create placeholder cards
+    out.innerHTML = '';
+    document.getElementById('exportAllBtn')?.remove();
+
+    urls.forEach((url, i) => {
+      const card = document.createElement('div');
+      card.className = 'loading-card';
+      card.id = 'card-' + i;
+      card.innerHTML = `<div class="spinner-sm"></div><div style="font-size:14px;color:var(--muted)">${escHtml(url)} を分析中…</div>`;
+      out.appendChild(card);
+    });
+
+    let done = 0;
+    const updateProgress = () => {
+      done++;
+      const pct = Math.round(done / urls.length * 100);
+      document.getElementById('progressFill').style.width = pct + '%';
+      document.getElementById('progressText').textContent = `${done} / ${urls.length} 社 分析完了`;
+    };
+
+    // Parallel fetch + analyze
+    await Promise.allSettled(urls.map(async (url, i) => {
+      try {
+        const info = await fetchCompanyInfo(url);
+        const data = await analyzeCompany(apiKey, url, info);
+        results[i] = { url, data };
+        renderCompanyCard(i, url, data);
+      } catch(e) {
+        results[i] = { url, error: e.message };
+        renderErrorCard(i, url, e.message);
+      }
+      updateProgress();
+    }));
+
+    // Show export all button
+    const exportBtn = document.createElement('button');
+    exportBtn.id = 'exportAllBtn';
+    exportBtn.className = 'export-all-btn';
+    exportBtn.style.display = 'block';
+    exportBtn.textContent = '📄 ' + urls.length + '社まとめ資料を出力';
+    exportBtn.onclick = exportAllDocument;
+    out.insertBefore(exportBtn, out.firstChild);
+
+    btn.disabled = false; btn.textContent = '分析スタート';
+  }
+
+  // ─── Fetch company info via CORS proxy ───
+  async function fetchCompanyInfo(url) {
+    try {
+      const res = await fetch(PROXY + encodeURIComponent(url), { signal: AbortSignal.timeout(10000) });
+      if (!res.ok) return null;
+      const json = await res.json();
+      return extractText(json.contents || '', url);
+    } catch {
+      return null;
+    }
+  }
+
+  function extractText(html, url) {
+    try {
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      doc.querySelectorAll('script,style,nav,footer,noscript').forEach(e => e.remove());
+      const title   = doc.title || '';
+      const metaDesc = doc.querySelector('meta[name="description"]')?.content
+                    || doc.querySelector('meta[property="og:description"]')?.content || '';
+      const body = doc.body?.innerText || doc.body?.textContent || '';
+      return [title, metaDesc, body].join('\n').replace(/\s+/g, ' ').trim().slice(0, 4000);
+    } catch { return ''; }
+  }
+
+  // ─── Analyze with Claude ───
+  async function analyzeCompany(apiKey, url, pageText) {
+    const SYSTEM = `あなたはビジネスアナリスト兼自動収益システム専門家です。
+
+【Co-Creation Sales Model（はじめ工房）の理解】
+企業→農家に5,000円発注 → 農家が5分セミナー実施 → 従業員にお米（5,000円相当）贈呈
+- 企業：社会保険料ゼロ増・経費計上OK・CSR実績
+- 従業員：昇給手取り3,263円より5,000円現物のほうが価値大
+- 農家・生産者：月10〜20万円の新販路
+
+会社のホームページ情報をもとに、以下のJSON形式のみ返してください（説明文不要）：
+{
+  "company_name": "会社名",
+  "industry": "業種（10文字以内）",
+  "business_summary": "事業概要（80文字以内）",
+  "strength": "主な強み・リソース（40文字以内）",
+  "co_creation_comments": [
+    "このシステムを活用するとできること①（40文字以内）",
+    "できること②（40文字以内）",
+    "できること③（40文字以内）"
+  ],
+  "proposals": [
+    {
+      "title": "モデル名（12文字以内）",
+      "category": "共創型|サブスク型|消耗品型|カートリッジ型|プラットフォーム型|ライセンス型",
+      "benchmark": "参考企業・事例（15文字以内）",
+      "overview": "仕組みの概要（100文字以内）",
+      "circulation": "価値の循環（誰→誰→誰、50文字以内）",
+      "stakeholders": [{"name":"関係者名","role":"役割（8文字）","benefit":"得られる価値（18文字）"}],
+      "flow": ["ステップ1（12文字）","ステップ2","ステップ3","ステップ4"],
+      "numbers": {"initial_cost":"初期コスト","monthly_revenue":"月次収益","margin":"利益率","payback":"回収期間"},
+      "risks": ["リスク1（18文字）","リスク2"],
+      "action": "最初の一歩（30文字以内）"
+    }
+  ]
+}
+
+必須：提案1はCo-Creation Sales Model応用版、提案2・3は業界特化。数字は具体的に。`;
+
+    const USER = `会社URL: ${url}
+ホームページ内容:
+${pageText || '（取得できませんでした。URLとドメイン名から推測してください）'}
+
+この会社のCo-Creation Sales Model活用方法と3つの自動収益システムを提案してください。`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:3500,
+        system:SYSTEM, messages:[{role:'user',content:USER}]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(err.error?.message || `HTTP ${res.status}`);
+    }
+    const data  = await res.json();
+    const text  = data.content[0].text;
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('JSONの解析に失敗しました');
+    return JSON.parse(match[0]);
+  }
+
+  // ─── Render company card ───
+  function renderCompanyCard(i, url, d) {
+    const placeholder = document.getElementById('card-' + i);
+    if (!placeholder) return;
+    const numCls = ['n1','n2','n3'];
+
+    const proposals = (d.proposals || []).map((p, pi) => {
+      const tagCls = TAG_CLASS[p.category] || '';
+      const flows = (p.flow||[]).map((s,si) =>
+        `<div class="flow-step">${escHtml(s)}</div>${si<p.flow.length-1?'<div class="flow-arr">→</div>':''}`
+      ).join('');
+      const holders = (p.stakeholders||[]).map(s=>`
+        <div class="stakeholder">
+          <div class="sh-name">${escHtml(s.name)}</div>
+          <div class="sh-role">${escHtml(s.role)}</div>
+          <div class="sh-benefit">${escHtml(s.benefit)}</div>
+        </div>`).join('');
+      const risks = (p.risks||[]).map(r=>`<span class="risk-tag">${escHtml(r)}</span>`).join('');
+      return `
+      <div class="proposal-card">
+        <div class="card-head">
+          <div class="card-num ${numCls[pi]}">${pi+1}</div>
+          <div style="flex:1">
+            <div class="card-title">${escHtml(p.title)}</div>
+            <div class="card-tags">
+              <span class="tag ${tagCls}">${escHtml(p.category)}</span>
+              <span class="tag">参考: ${escHtml(p.benchmark)}</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-overview">${escHtml(p.overview)}</div>
+        ${p.circulation?`<div class="circ-box">🔄 ${escHtml(p.circulation)}</div>`:''}
+        <div class="section-label">フロー</div>
+        <div class="flow-row">${flows}</div>
+        <div class="stakeholders">${holders}</div>
+        <div class="numbers-grid">
+          <div class="num-item"><div class="num-label">初期コスト</div><div class="num-val">${escHtml(p.numbers?.initial_cost||'—')}</div></div>
+          <div class="num-item"><div class="num-label">月次収益</div><div class="num-val">${escHtml(p.numbers?.monthly_revenue||'—')}</div></div>
+          <div class="num-item"><div class="num-label">利益率</div><div class="num-val">${escHtml(p.numbers?.margin||'—')}</div></div>
+          <div class="num-item"><div class="num-label">回収期間</div><div class="num-val">${escHtml(p.numbers?.payback||'—')}</div></div>
+        </div>
+        <div class="section-label">リスク</div>
+        <div class="risks" style="margin-bottom:10px">${risks}</div>
+        <div class="action-box"><div class="action-label">▶ 最初の一歩</div><div class="action-text">${escHtml(p.action)}</div></div>
+      </div>`;
+    }).join('');
+
+    const cando = (d.co_creation_comments||[]).map((c,ci)=>`
+      <div class="cando-item">
+        <div class="cando-dot">${ci+1}</div>
+        <div>${escHtml(c)}</div>
+      </div>`).join('');
+
+    const card = document.createElement('div');
+    card.className = 'company-card';
+    card.id = 'card-' + i;
+    card.innerHTML = `
+      <div class="company-header">
+        <div class="co-num">${i+1}</div>
+        <div>
+          <div class="co-name">${escHtml(d.company_name||'—')}</div>
+          <div class="co-url">${escHtml(url)}</div>
+        </div>
+        <div class="co-industry">${escHtml(d.industry||'')}</div>
+      </div>
+      <div class="company-body">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:var(--s13);line-height:1.7">${escHtml(d.business_summary||'')}</div>
+        <div class="cando-section">
+          <div class="cando-title">💡 このシステムを活用するとできること</div>
+          ${cando}
+        </div>
+        <div class="proposals-heading">自動収益システム提案（3モデル）</div>
+        ${proposals}
+        <button class="co-export-btn" onclick="exportSingleDocument(${i})">📄 この会社の資料を出力</button>
+      </div>`;
+    placeholder.replaceWith(card);
+  }
+
+  function renderErrorCard(i, url, msg) {
+    const placeholder = document.getElementById('card-' + i);
+    if (!placeholder) return;
+    const card = document.createElement('div');
+    card.className = 'company-card';
+    card.id = 'card-' + i;
+    card.innerHTML = `
+      <div class="company-header">
+        <div class="co-num" style="background:var(--red)">${i+1}</div>
+        <div><div class="co-name">分析失敗</div><div class="co-url">${escHtml(url)}</div></div>
+      </div>
+      <div class="company-body" style="color:var(--red);font-size:13px">${escHtml(msg)}</div>`;
+    placeholder.replaceWith(card);
+  }
+
+  // ─── Export single company ───
+  function exportSingleDocument(i) {
+    const r = results[i];
+    if (!r?.data) return;
+    const win = window.open('', '_blank');
+    if (!win) { alert('ポップアップをブロックしています'); return; }
+    win.document.write(buildDocHtml([r], new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'})));
+    win.document.close();
+  }
+
+  // ─── Export all companies ───
+  function exportAllDocument() {
+    const valid = results.filter(r => r?.data);
+    if (!valid.length) return;
+    const win = window.open('', '_blank');
+    if (!win) { alert('ポップアップをブロックしています'); return; }
+    win.document.write(buildDocHtml(valid, new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'long',day:'numeric'})));
+    win.document.close();
+  }
+
+  // ─── Build document HTML ───
+  function buildDocHtml(items, date) {
+    const catColor={'共創型':'#2563eb','サブスク型':'#059669','消耗品型':'#d97706','カートリッジ型':'#d97706','プラットフォーム型':'#7c3aed','ライセンス型':'#7c3aed'};
+    const catBg={'共創型':'#e8f4fd','サブスク型':'#eef7ee','消耗品型':'#fdf3e7','カートリッジ型':'#fdf3e7','プラットフォーム型':'#f3e8ff','ライセンス型':'#f3e8ff'};
+    const numBg=['#e8f4fd','#eef7ee','#fdf3e7'];
+    const numCol=['#2563eb','#059669','#d97706'];
+
+    const companySections = items.map((r, ri) => {
+      const d = r.data;
+      const cando = (d.co_creation_comments||[]).map((c,ci)=>`
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:9.5pt">
+          <div style="width:18px;height:18px;border-radius:50%;background:#0369a1;color:#fff;font-size:10pt;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ci+1}</div>
+          <div>${escHtml(c)}</div>
+        </div>`).join('');
+
+      const proposals = (d.proposals||[]).map((p,pi)=>{
+        const col = catColor[p.category]||'#475569';
+        const bg  = catBg[p.category]||'#f0f4f8';
+        const nb  = numBg[pi]||'#f0f4f8';
+        const nc  = numCol[pi]||'#2563eb';
+        const flows = (p.flow||[]).map((s,si)=>
+          `<span style="padding:3px 8px;border:1px solid #e0e8f0;border-radius:4px;font-size:8.5pt">${escHtml(s)}</span>${si<p.flow.length-1?'<span style="color:#cbd5e1;font-size:12pt">→</span>':''}`
+        ).join('');
+        const holders = (p.stakeholders||[]).map(s=>`
+          <div style="flex:1;min-width:75px;padding:7px;border:1px solid #e0e8f0;border-radius:6px;background:#fafafa;text-align:center">
+            <div style="font-size:9pt;font-weight:600;margin-bottom:2px">${escHtml(s.name)}</div>
+            <div style="font-size:8pt;color:#94a3b8;margin-bottom:3px">${escHtml(s.role)}</div>
+            <div style="font-size:8.5pt;color:#64748b">${escHtml(s.benefit)}</div>
+          </div>`).join('');
+        const risks = (p.risks||[]).map(r=>`<span style="padding:2px 7px;border:1px solid #fecaca;border-radius:3px;font-size:8pt;background:#fef2f2;color:#dc2626;margin-right:4px;display:inline-block">${escHtml(r)}</span>`).join('');
+        return `
+        <div style="border:1px solid #e0e8f0;border-left:4px solid ${col};border-radius:8px;padding:14px 16px;margin-bottom:14px;page-break-inside:avoid;break-inside:avoid">
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+            <div style="width:28px;height:28px;border-radius:50%;background:${nb};color:${nc};font-weight:700;font-size:13pt;display:flex;align-items:center;justify-content:center;flex-shrink:0">${pi+1}</div>
+            <div style="flex:1">
+              <div style="font-size:13pt;font-weight:700;color:#1e293b">${escHtml(p.title)}</div>
+              <div style="margin-top:3px">
+                <span style="padding:2px 8px;border-radius:4px;font-size:8pt;background:${bg};color:${col}">${escHtml(p.category)}</span>
+                <span style="padding:2px 8px;border-radius:4px;font-size:8pt;background:#f0f4f8;color:#64748b;margin-left:4px">参考: ${escHtml(p.benchmark)}</span>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:9.5pt;color:#475569;line-height:1.7;padding:9px 12px;background:#f8f9fb;border-radius:6px;margin-bottom:10px">${escHtml(p.overview)}</div>
+          ${p.circulation?`<div style="font-size:9.5pt;color:#475569;background:#f8f9fb;padding:6px 10px;border-radius:5px;margin-bottom:10px">🔄 ${escHtml(p.circulation)}</div>`:''}
+          <div style="font-size:8pt;font-weight:600;color:#94a3b8;letter-spacing:.5px;margin-bottom:5px">フロー</div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-bottom:10px">${flows}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">${holders}</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+            ${['initial_cost','monthly_revenue','margin','payback'].map((k,ki)=>`
+            <div style="padding:7px 9px;border:1px solid #e0e8f0;border-radius:5px;background:#f8f9fb">
+              <div style="font-size:8pt;color:#94a3b8;margin-bottom:2px">${['初期コスト','月次収益','利益率','回収期間'][ki]}</div>
+              <div style="font-size:9.5pt;font-weight:700">${escHtml(p.numbers?.[k]||'—')}</div>
+            </div>`).join('')}
+          </div>
+          <div style="margin-bottom:8px">${risks}</div>
+          <div style="padding:8px 11px;background:linear-gradient(135deg,#eef7ee,#e8f4fd);border-radius:5px">
+            <span style="font-size:8pt;font-weight:600;color:#059669;margin-right:6px">▶ 最初の一歩</span>
+            <span style="font-size:9.5pt">${escHtml(p.action)}</span>
+          </div>
+        </div>`;
+      }).join('');
+
+      return `
+      <div style="page-break-before:${ri>0?'always':'auto'}">
+        <div style="border:1px solid #e0e8f0;border-radius:10px;overflow:hidden;margin-bottom:20px">
+          <div style="background:linear-gradient(135deg,#f8f9fb,#f0f4f8);padding:14px 20px;border-bottom:1px solid #e0e8f0;display:flex;align-items:center;gap:12px">
+            <div style="width:34px;height:34px;border-radius:50%;background:#2563eb;color:#fff;font-weight:700;font-size:15pt;display:flex;align-items:center;justify-content:center;flex-shrink:0">${ri+1}</div>
+            <div style="flex:1">
+              <div style="font-size:14pt;font-weight:700">${escHtml(d.company_name||'—')}</div>
+              <div style="font-size:9pt;color:#94a3b8">${escHtml(r.url)}</div>
+            </div>
+            <div style="padding:3px 10px;border-radius:20px;background:#e8f4fd;color:#2563eb;font-size:10pt;font-weight:600">${escHtml(d.industry||'')}</div>
+          </div>
+          <div style="padding:16px 20px">
+            <div style="font-size:9.5pt;color:#475569;line-height:1.7;margin-bottom:14px">${escHtml(d.business_summary||'')}</div>
+            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+              <div style="font-size:10pt;font-weight:700;color:#0369a1;margin-bottom:8px">💡 このシステムを活用するとできること</div>
+              ${cando}
+            </div>
+            <div style="font-size:9pt;font-weight:600;color:#94a3b8;letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px;padding-bottom:5px;border-bottom:1px solid #e0e8f0">自動収益システム提案（3モデル）</div>
+            ${proposals}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>${items.length}社 自動収益システム提案書｜はじめ工房</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+@page{size:A4;margin:16mm 14mm}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP','Yu Gothic',sans-serif;background:#fff;color:#1e293b;font-size:10pt;line-height:1.6}
+.print-bar{position:fixed;top:0;left:0;right:0;background:#1e293b;color:#fff;padding:9px 24px;display:flex;align-items:center;justify-content:space-between;z-index:100;font-size:13px}
+.print-bar button{padding:6px 18px;background:#2563eb;color:#fff;border:none;border-radius:5px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.page{max-width:820px;margin:0 auto;padding:55px 0 40px}
+.cover{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid #e0e8f0;margin-bottom:24px}
+@media print{.print-bar{display:none}.page{padding-top:0}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="print-bar">
+  <span>${items.length}社 自動収益システム提案書｜はじめ工房</span>
+  <button onclick="window.print()">🖨️ 印刷 / PDF保存</button>
+</div>
+<div class="page">
+  <div class="cover">
+    <div>
+      <div style="font-size:16pt;font-weight:700;color:#2563eb;margin-bottom:4px"><span style="color:#f59e0b">は</span>じめ工房</div>
+      <div style="font-size:8pt;color:#94a3b8;letter-spacing:.5px">Co-Creation Sales Model / Revenue Architecture</div>
+      <div style="font-size:18pt;font-weight:700;color:#1e293b;margin-top:14px;margin-bottom:5px">${items.length}社 自動収益システム提案書</div>
+      <div style="font-size:11pt;color:#2563eb;font-weight:600">各社のリソースを活かした収益モデル提案</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10pt;color:#64748b;margin-bottom:6px">${date}</div>
+      <div style="font-size:9pt;color:#94a3b8">ishikawa@hajime-create.jp</div>
+    </div>
+  </div>
+  ${companySections}
+  <div style="border-top:1px solid #e0e8f0;padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;font-size:8.5pt;color:#94a3b8">
+    <span>合同会社はじめ工房　代表：石川 創（はじめ）</span>
+    <span>${date}</span>
+  </div>
+</div>
+</body>
+</html>`;
+  }
+
+  // ─── Helpers ───
+  function escHtml(s) {
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
